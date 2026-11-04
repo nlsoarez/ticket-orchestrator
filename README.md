@@ -18,6 +18,56 @@ python -m unittest discover -s tests -p 'test_purchase_planning.py' -v
 
 **Esta base de planejamento ainda não está conectada ao dashboard/API e não realiza compras ou pagamentos.** O serviço atualmente implantado na Hostinger não foi alterado. Não utilizamos GitHub Actions.
 
+## V2B — Cadastros, partidas e planejamentos persistentes (04/11/2026)
+
+Esta versão acrescenta um **workspace operacional** ao painel de homologação:
+
+- **Torcedores:** nome de identificação, vínculos independentes por clube (sócio ou público geral), plano de sócio, declarações de consentimento, identificação e biometria. Os indicadores são declarações do operador, **não validações junto ao clube**.
+- **Grupos:** vários portadores por grupo; ao criar um planejamento, a composição é congelada para preservar auditoria mesmo se o grupo for editado.
+- **Partidas:** mandante, visitante, data com fuso, plataforma, URL informada manualmente, fase de venda, limite informado de ingressos, política de convidados e exigência de biometria.
+- **Planejamentos:** grupo, comprador integrante do grupo, setor e limites de preço unitário/total em centavos. A pré-verificação informa pendências.
+- **Persistência:** banco SQLite em volume Docker nomeado `orchestrator_data`, separado de código, painel e segredos. O volume persiste durante atualizações com `docker compose up`; **nunca use `docker compose down -v`** sem backup.
+- **Segurança:** Caddy Basic Auth + API key configurados no servidor; sem CPFs, cartões, CVVs, imagens faciais ou credenciais de clubes armazenadas. A aplicação está acessível apenas no localhost `8182` por padrão.
+
+**Limitação deliberada:** não existe integração comercial, monitoramento de disponibilidade em tempo real, compra automática, reserva nem pagamento. Não marque declarações como verificações oficiais. A API de planejamento não inicia checkout ou cobrança.
+
+### Atualização manual da VPS Hostinger (sem GitHub Actions)
+
+Com o serviço já instalado em `/opt/ticket-orchestrator` e acesso ao **terminal da VPS**:
+
+```bash
+cd /opt/ticket-orchestrator
+git status --short
+git pull --ff-only
+docker compose config --quiet
+docker compose up -d --build
+docker compose ps
+curl -I http://127.0.0.1:8182/
+```
+
+A última resposta deverá ser **401 Unauthorized** sem credenciais; isso indica que o gateway exige autenticação. Se `git status --short` mostrar alterações locais, investigue antes do `git pull` (não use `git reset --hard`).
+
+**Backup dos cadastros**, sem interromper os outros contêineres:
+
+```bash
+cd /opt/ticket-orchestrator
+mkdir -p /root/ticket-backups
+docker compose exec -T app python -c 'import sqlite3; src=sqlite3.connect("/data/ticket_orchestrator.sqlite3"); dst=sqlite3.connect("/tmp/ticket-backup.sqlite3"); src.backup(dst); dst.close(); src.close()'
+```
+
+**Atenção:** o comando acima **não funciona como backup persistente** se usado literalmente, pois `/tmp` é temporário e interno ao contêiner. O procedimento recomendado é fazer backup consistente a partir de uma pasta de backup persistente montada para esse fim ou utilizar `docker run` com os volumes adequados, sem copiar o banco SQLite em uso com `cp`. Não remova volumes de dados. Antes de usar o sistema com cadastros reais, defina retenção e cópias de segurança regulares.
+
+### Testes locais (sem CI automatizado)
+
+```bash
+python -m pip install -r bot/requirements.txt pytest httpx
+python -m pytest -q tests
+node --check dashboard/app.js  # opcional: requer Node.js
+```
+
+Os testes de API devem ser executados **localmente ou na VPS**, não pelo GitHub Actions. O motor de simulação anterior continua disponível em Visão geral.
+
+
 ## Estrutura
 
 ```text
