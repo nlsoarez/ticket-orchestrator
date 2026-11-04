@@ -1,6 +1,7 @@
-"""V3: descoberta MANUAL de notícias públicas de ingressos nos sites dos clubes.
+"""V3.2: notícias públicas de ingressos dos clubes; agendamento opcional.
 
-Nenhuma consulta é iniciada no carregamento do painel ou em background.
+Nenhuma consulta é iniciada no carregamento do painel; o monitoramento periódico
+só executa quando ativado pelo usuário.
 Nenhum login, checkout, anti-bot, navegador automatizado ou pagamento.
 """
 import json
@@ -241,7 +242,7 @@ def scan():
                         raise ValueError('Nenhuma notícia de ingressos identificada; estrutura do site pode ter mudado')
                 with database() as conn:
                     _init(conn)
-                    has_baseline = conn.execute('SELECT 1 FROM monitor_announcements WHERE club=? LIMIT 1', (club,)).fetchone()
+                    has_baseline = conn.execute('SELECT 1 FROM monitor_sources WHERE club=? AND last_success IS NOT NULL', (club,)).fetchone()
                     for item in articles:
                         conn.execute('''INSERT OR IGNORE INTO monitor_announcements
                             (club, url, title, discovered_at, is_new) VALUES(?,?,?,?,?)''',

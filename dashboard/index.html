@@ -109,8 +109,17 @@
           <div class="two-cols monitor-layout">
             <article class="surface">
               <div class="surface-heading"><div><span class="eyebrow">FONTES PÚBLICAS OFICIAIS</span><h2>Consultar comunicados</h2></div></div>
-              <p class="muted">A consulta ocorre <strong>somente ao clicar</strong> no botão. Não acessa contas, filas, bilheterias ou serviços de pagamento. Na primeira consulta os anúncios encontrados são classificados como base histórica, sem alerta de novidade.</p>
+              <p class="muted">A consulta manual ocorre pelo botão abaixo. O acompanhamento periódico é opcional e começa desativado. Não acessa contas, filas, bilheterias ou serviços de pagamento. Na primeira consulta os anúncios encontrados são classificados como base histórica, sem alerta de novidade.</p>
               <button id="monitorScan" class="btn" type="button">Verificar comunicados agora</button>
+              <div class="monitor-schedule">
+                <strong>Monitoramento periódico</strong>
+                <p class="muted">Opcional, desativado por padrão. A VPS consulta notícias públicas no intervalo escolhido. Novidades ficam destacadas no painel; não há avisos por WhatsApp ou e-mail nesta versão.</p>
+                <div class="monitor-schedule-controls">
+                  <label for="monitorScheduleInterval">Intervalo<select id="monitorScheduleInterval"><option value="15">15 minutos</option><option value="30" selected>30 minutos</option><option value="60">1 hora</option><option value="180">3 horas</option></select></label>
+                  <button type="button" id="monitorScheduleToggle" class="btn secondary small">Ativar monitoramento</button>
+                </div>
+                <p id="monitorScheduleStatus" class="muted" role="status">Consultando configuração...</p>
+              </div>
               <div class="alert-inline monitor-warning">Notícias encontradas <strong>não comprovam disponibilidade</strong> de ingressos. Confira horários, prioridades e canais de venda no próprio comunicado oficial.</div>
               <div class="surface-heading monitor-source-heading"><div><span class="eyebrow">SITUAÇÃO DAS FONTES</span><h2>Vasco e Flamengo</h2></div></div>
               <div id="monitorSources" class="stack"><div class="empty">Consultas ainda não realizadas.</div></div>

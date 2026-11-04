@@ -65,3 +65,18 @@ A página do Vasco retorna um HTML mínimo (SPA). A partir de uma inspeção man
 O monitor agora faz uma consulta somente ao endpoint fixo e permitido, sem cookies, sessão, senha ou fluxos de compra. A API pública **não é a API comercial de bilheteria**. Usa ID por artigo como chave estável, filtrando notícias relacionadas a ingressos pelo título. `articleBody` não é armazenado. Os itens observados vieram com `link:null`; portanto, o painel **não inventa URLs individuais**: abre a listagem `https://vasco.com.br/noticias/` com aviso de que não há link direto comprovado.
 
 A resposta vazia (items=[] ou nenhuma notícia de ingresso na página) é uma consulta válida com 0 notícias relevantes, não falha; um envelope JSON malformado ou código de erro é registrado como falha. Uma página de 13 itens pode omitir anúncio antigo ou fora da primeira página. Esta versão ainda não garante cobertura de todas as matérias e exige homologação real na VPS. Nenhuma consulta automática em background é iniciada.
+
+## V3.2 — Agendamento opcional na VPS
+
+Implementação: `bot/monitor_scheduler.py`, FastAPI lifespan e botão na aba Monitoramento.
+- O agendamento começa **desativado** e não acessa fontes externas até o usuário ativar.
+- Intervalos aceitos pela API: **15 a 1.440 minutos**, no painel 15/30/60/180 minutos.
+- O próximo disparo é gravado em `monitor_schedule` no mesmo volume SQLite, com data UTC.
+- Um laço assíncrono com um único worker verifica a configuração a cada 30 segundos. A consulta utiliza o mesmo `scan()` protegido por lock, em thread para não bloquear outras rotas.
+- Um início/reinício de contêiner preserva configuração e próxima consulta; se a próxima consulta venceu durante a indisponibilidade, um ciclo será executado após até 30 segundos do início.
+- A atualização do painel a cada minuto faz **somente GET no banco local**, sem acionar sites.
+- A primeira consulta bem-sucedida de cada fonte estabelece histórico mesmo com 0 notícias (corrige caso em que a página contém itens sem ingressos); itens subsequentes serão identificados como novos.
+- Erros das fontes aparecem individualmente no painel; `last_outcome` indica o resultado do último ciclo automático.
+- A ativação só ocorre por `PUT /api/monitor/schedule` autenticado, com corpo `{"enabled":true,"interval_minutes":30}`. GET nunca inicia consultas. 422 para intervalos fora de 15–1440 ou valores inválidos.
+- Sem notificações push externas, compras, checkout, dados sensíveis, GitHub Actions ou exposição de novas portas públicas.
+- **Limite:** consulta a primeira página de 13 matérias do Vasco; outras páginas e alterações em matérias existentes ainda não são detectadas. O HTML do Flamengo também pode mudar.

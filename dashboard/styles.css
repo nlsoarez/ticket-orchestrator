@@ -9,3 +9,11 @@
 .monitor-layout{grid-template-columns:minmax(0,0.95fr) minmax(0,1.45fr);align-items:start}
 .monitor-layout .muted{margin:0 0 20px}.monitor-warning{margin:17px 0 26px}.monitor-source-heading{margin:22px 0 14px}.monitor-error{font-size:12px;color:#ffb7bf;overflow-wrap:anywhere;margin:10px 0 0}.monitor-layout .entry-title{line-height:1.5}.monitor-layout .stack{max-height:600px;overflow:auto;padding-right:2px}
 @media(max-width:940px){.monitor-layout{grid-template-columns:1fr}.monitor-layout .stack{max-height:none}}
+
+/* V3.2 — monitoramento agendado (opt-in) */
+.monitor-schedule{margin-top:18px;border:1px solid #304c4b;border-radius:11px;background:#12212b;padding:16px}
+.monitor-schedule>strong{font-size:13px;color:#eaf8f3}.monitor-schedule>p{margin:9px 0 0!important}
+.monitor-schedule-controls{display:flex;gap:11px;align-items:flex-end;margin-top:15px;flex-wrap:wrap}
+.monitor-schedule-controls label{display:grid;gap:7px;font-size:11px;font-weight:700;color:#b8c8d8}
+.monitor-schedule-controls select{background:#101a27;border:1px solid #36445a;border-radius:8px;padding:9px 10px;color:#edf5ff;min-width:150px}
+@media(max-width:500px){.monitor-schedule-controls>*{width:100%}}
