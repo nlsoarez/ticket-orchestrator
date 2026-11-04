@@ -13,7 +13,7 @@ FLAMENGO_HTML = b'''<!doctype html><a href="/noticias/ingressos/flamengo-x-vasco
 <a href="/noticias/ingressos/flamengo-x-botafogo">Flamengo x Botafogo: venda de ingressos</a>
 <a href="https://evil.example/noticias/ingressos/captura">Ingressos falsos</a>
 <a href="/noticias/futebol/placar">Placar</a>'''
-VASCO_HTML=b'<a href="/vasco/informacoes-sobre-ingressos-vasco-x-palmeiras-2026/">Informacoes sobre ingressos Vasco x Palmeiras</a>'
+VASCO_JSON=b'{"header":{"codigo":1},"data":{"items":[{"id":1577773,"title":"Informacoes sobre ingressos Vasco x Palmeiras","link":null}]}}'
 
 @pytest.fixture
 async def client(tmp_path,monkeypatch):
@@ -22,7 +22,7 @@ async def client(tmp_path,monkeypatch):
         yield http
 
 def fake_fetch(url):
-    return FLAMENGO_HTML if 'flamengo' in url else VASCO_HTML
+    return FLAMENGO_HTML if 'flamengo' in url else VASCO_JSON
 
 
 def test_link_extraction_is_same_origin_and_ticket_only():
@@ -67,7 +67,7 @@ async def test_new_item_generates_single_alert_without_duplicates(client,monkeyp
     monkeypatch.setattr(monitor,'fetch_public_page',fake_fetch)
     assert (await client.post('/api/monitor/scan',headers=KEY)).status_code==200
     new_html=FLAMENGO_HTML+b'<a href="/noticias/ingressos/flamengo-x-gremio">Nova informacao de ingressos</a>'
-    monkeypatch.setattr(monitor,'fetch_public_page',lambda url: new_html if 'flamengo' in url else VASCO_HTML)
+    monkeypatch.setattr(monitor,'fetch_public_page',lambda url: new_html if 'flamengo' in url else VASCO_JSON)
     d=(await client.post('/api/monitor/scan',headers=KEY)).json()
     assert len(d['announcements'])==4
     assert d['new_count']==1

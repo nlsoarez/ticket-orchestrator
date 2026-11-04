@@ -7,7 +7,7 @@
 | Clube | Fonte oficial de notícias | Situação |
 | --- | --- | --- |
 | Flamengo | `https://www.flamengo.com.br/noticias/ingressos` | Listagem pública verificada via consulta web em 04/11/2026; leitura pela VPS e parser pendentes de homologação. |
-| Vasco | `https://vasco.com.br/noticias/` | Seção oficial; conteúdo pode ser carregado por JavaScript e não gerar artigos no parser HTML. Erro deve aparecer no painel sem falsificar resultados. |
+| Vasco | `https://vasco.com.br/noticias/` | Consulta a listagem JSON pública observada no Chrome: `https://fancontentapi-vasco.vasco.com.br/api/owner/297/newsArticles?page=1&size=13`. IDs estáveis; `link:null` na resposta de exemplo. |
 
 **Não utilizar sites de terceiros ou domínios parecidos** para pagamentos. Comunicados são informativos: status e horário das vendas devem ser conferidos no canal oficial de cada partida.
 
@@ -26,11 +26,11 @@ Não existe agendamento automático nesta fase. Abertura do painel, atualizaçã
 Proteção: Caddy Basic Auth no navegador e `X-API-Key` interno para todas as rotas `/api/monitor/*`.
 
 - `GET /api/monitor/status` — 200 com `mode`, `sources` (tentativa, sucesso, erro por clube), `announcements` e `new_count`. Não consulta rede externa.
-- `POST /api/monitor/scan` — 200 com status e `outcome` (`ok`, `partial_failure`, `failed`). Faz até uma consulta HTTPS pública por fonte. 409 se outra consulta estiver em andamento. Respostas de erro por fonte aparecem no campo `error`.
+- `POST /api/monitor/scan` — 200 com status e `outcome` (`ok`, `partial_failure`, `failed`). Faz até uma consulta HTTPS pública por fonte: JSON para Vasco e HTML para Flamengo. 409 se outra consulta estiver em andamento. Respostas de erro por fonte aparecem no campo `error`.
 - `POST /api/monitor/ack` — 200, limpa `is_new` de todos os anúncios e retorna o status. Não apaga artigos.
 - Sem chave de API válida: 403 (ou 503 para configuração sem chave).
 
-**Limites:** apenas URLs de origem configuradas no código; sem entrada de URLs arbitrárias; HTTPS obrigatório; redirecionamentos para outros hosts recusados; timeout de 8 s por fonte; limite de resposta de 600 KB; links apenas dentro do domínio do clube; máximo de 30 links por fonte e 60 artigos na lista.
+**Limites:** apenas URLs de origem configuradas no código; sem entrada de URLs arbitrárias; HTTPS obrigatório; redirecionamentos para outros hosts recusados; timeout de 8 s por fonte; limite de resposta de 600 KB; links do Flamengo apenas dentro do domínio do clube; a API de notícias do Vasco é fixa e validada, com até 13 itens na página consultada; máximo de 60 artigos no retorno.
 
 ## Persistência e deploy
 
@@ -57,3 +57,11 @@ Não executar `docker compose down -v` e não utilizar `docker-compose.public.ym
 - Páginas renderizadas em JavaScript podem gerar falha visível em vez de resultados.
 - Não monitora atualizações de uma URL já conhecida, somente novas URLs.
 - Não faz compra nem pagamento.
+
+## Correção V3.1 — Fonte de notícias do Vasco
+
+A página do Vasco retorna um HTML mínimo (SPA). A partir de uma inspeção manual no Chrome em 04/11/2026, verificou-se uma requisição **pública** GET `https://fancontentapi-vasco.vasco.com.br/api/owner/297/newsArticles?page=1&size=13`, retornando um JSON com `header.codigo=1` e `data.items` contendo `id`, `title`, `articleBody`, `createdAt` e `link`. O primeiro lote de 13 itens fornecido para homologação tinha notícias de ingressos com IDs `1577773`, `1574745` e `1573504`.
+
+O monitor agora faz uma consulta somente ao endpoint fixo e permitido, sem cookies, sessão, senha ou fluxos de compra. A API pública **não é a API comercial de bilheteria**. Usa ID por artigo como chave estável, filtrando notícias relacionadas a ingressos pelo título. `articleBody` não é armazenado. Os itens observados vieram com `link:null`; portanto, o painel **não inventa URLs individuais**: abre a listagem `https://vasco.com.br/noticias/` com aviso de que não há link direto comprovado.
+
+A resposta vazia (items=[] ou nenhuma notícia de ingresso na página) é uma consulta válida com 0 notícias relevantes, não falha; um envelope JSON malformado ou código de erro é registrado como falha. Uma página de 13 itens pode omitir anúncio antigo ou fora da primeira página. Esta versão ainda não garante cobertura de todas as matérias e exige homologação real na VPS. Nenhuma consulta automática em background é iniciada.

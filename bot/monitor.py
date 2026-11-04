@@ -3,6 +3,7 @@
 Nenhuma consulta é iniciada no carregamento do painel ou em background.
 Nenhum login, checkout, anti-bot, navegador automatizado ou pagamento.
 """
+import json
 import re
 import threading
 from datetime import datetime, timezone
@@ -16,9 +17,14 @@ from .workspace import database
 
 router = APIRouter(prefix='/api/monitor', tags=['monitoramento-publico'])
 
+# Fonte observada no DevTools do site oficial em 04/11/2026.
+# O domínio serve notícias públicas em JSON; não é uma API de venda de ingressos.
+VASCO_NEWS_ENDPOINT = 'https://fancontentapi-vasco.vasco.com.br/api/owner/297/newsArticles?page=1&size=13'
 SOURCES = (
-    {'club': 'Vasco', 'url': 'https://vasco.com.br/noticias/'},
-    {'club': 'Flamengo', 'url': 'https://www.flamengo.com.br/noticias/ingressos'},
+    {'club': 'Vasco', 'url': 'https://vasco.com.br/noticias/',
+     'fetch_url': VASCO_NEWS_ENDPOINT, 'format': 'json'},
+    {'club': 'Flamengo', 'url': 'https://www.flamengo.com.br/noticias/ingressos',
+     'fetch_url': 'https://www.flamengo.com.br/noticias/ingressos', 'format': 'html'},
 )
 _ALLOWED_HOSTS = {
     'Vasco': {'vasco.com.br', 'www.vasco.com.br'},
@@ -44,17 +50,19 @@ class StrictSameHostRedirectHandler(HTTPRedirectHandler):
 def fetch_public_page(url):
     """Consulta única, limitada, sem enviar credenciais ou seguir hosts externos."""
     parts = urlsplit(url)
-    if not any(url == s['url'] for s in SOURCES):
+    source = next((s for s in SOURCES if url == s['fetch_url']), None)
+    if source is None:
         raise ValueError('Fonte fora da lista de sites oficiais permitidos')
+    expected = 'json' if source['format'] == 'json' else 'html'
     request = Request(url, headers={
-        'User-Agent': 'TicketOrchestrator/3.0 (consulta manual a noticias publicas)',
-        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'TicketOrchestrator/3.1 (consulta manual a noticias publicas)',
+        'Accept': 'application/json' if expected == 'json' else 'text/html,application/xhtml+xml',
     })
     opener = build_opener(StrictSameHostRedirectHandler(parts.hostname))
     with opener.open(request, timeout=8) as response:
         ctype = response.headers.get('Content-Type', '')
-        if 'html' not in ctype.lower():
-            raise ValueError('O site não retornou uma página HTML')
+        if expected not in ctype.lower():
+            raise ValueError('O site não retornou conteúdo ' + expected.upper())
         data = response.read(600_001)
         if len(data) > 600_000:
             raise ValueError('Página acima do limite de leitura (600 KB)')
@@ -118,6 +126,56 @@ def extract_articles(club, base_url, html):
     return list(found.values())
 
 
+# Somente anúncios claramente relacionados a ingressos entram no monitor.
+# Não analisar articleBody para evitar falsos positivos em notícias gerais.
+_VASCO_TICKET_TITLE = re.compile(r'ingress|bilheteria|informativo de partida|camarote firezone', re.I)
+
+
+def extract_vasco_articles(raw):
+    """Extrai notícias da API pública; IDs estáveis, sem inventar links individuais.
+
+    A resposta atualmente tem link=null em notícias normais. Registramos chave
+    sintética por ID e direcionamos o leitor para a seção pública de notícias,
+    explicitamente identificada como listagem, não como permalink.
+    """
+    try:
+        document = json.loads(raw)
+    except (ValueError, TypeError, UnicodeDecodeError) as exc:
+        raise ValueError('Resposta JSON inválida da fonte Vasco') from exc
+    if not isinstance(document, dict) or not isinstance(document.get('header'), dict):
+        raise ValueError('Cabeçalho da API Vasco ausente')
+    if document['header'].get('codigo') != 1:
+        raise ValueError('API de notícias do Vasco retornou código de erro')
+    data = document.get('data')
+    if not isinstance(data, dict) or not isinstance(data.get('items'), list):
+        raise ValueError('Lista de notícias da API Vasco ausente')
+    articles = {}
+    for item in data['items'][:30]:
+        if not isinstance(item, dict):
+            continue
+        article_id = item.get('id')
+        title = item.get('title')
+        if type(article_id) is not int or article_id < 1 or not isinstance(title, str):
+            continue
+        title = re.sub(r'\s+', ' ', title).strip()
+        if not 10 <= len(title) <= 500 or not _VASCO_TICKET_TITLE.search(title):
+            continue
+        key = f'vasco:article:{article_id}'
+        articles[key] = {'club': 'Vasco', 'url': key, 'title': title[:260]}
+    return list(articles.values())
+
+
+def _public_announcement(row):
+    item = dict(row)
+    if item['club'] == 'Vasco' and re.fullmatch(r'vasco:article:[1-9]\d*', item['url']):
+        item['open_url'] = 'https://vasco.com.br/noticias/'
+        item['link_type'] = 'archive'
+    else:
+        item['open_url'] = item['url']
+        item['link_type'] = 'article'
+    return item
+
+
 def _init(conn):
     conn.executescript('''
     CREATE TABLE IF NOT EXISTS monitor_announcements (
@@ -140,7 +198,7 @@ def monitor_status():
     with database() as conn:
         _init(conn)
         rows = {r['club']: dict(r) for r in conn.execute('SELECT * FROM monitor_sources').fetchall()}
-        announcements = [dict(r) for r in conn.execute('''
+        announcements = [_public_announcement(r) for r in conn.execute('''
             SELECT club, url, title, discovered_at, is_new
             FROM monitor_announcements ORDER BY discovered_at DESC, club, url LIMIT 60
         ''').fetchall()]
@@ -174,9 +232,13 @@ def scan():
             club, url = source['club'], source['url']
             attempt = _now()
             try:
-                articles = extract_articles(club, url, fetch_public_page(url))
-                if not articles:
-                    raise ValueError('Nenhuma notícia de ingressos identificada; estrutura do site pode ter mudado')
+                data = fetch_public_page(source['fetch_url'])
+                if source['format'] == 'json':
+                    articles = extract_vasco_articles(data)
+                else:
+                    articles = extract_articles(club, url, data)
+                    if not articles:
+                        raise ValueError('Nenhuma notícia de ingressos identificada; estrutura do site pode ter mudado')
                 with database() as conn:
                     _init(conn)
                     has_baseline = conn.execute('SELECT 1 FROM monitor_announcements WHERE club=? LIMIT 1', (club,)).fetchone()

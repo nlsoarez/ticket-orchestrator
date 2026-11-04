@@ -26,6 +26,12 @@ Inclui a aba **Monitoramento** para consultar notícias públicas de ingressos n
 
 Contratos, fontes, segurança, deploy e limitações estão em [docs/monitoramento-v3.md](docs/monitoramento-v3.md). O conjunto de 26 testes locais passou, incluindo oito novos testes de monitoramento, com dados simulados. Sem GitHub Actions.
 
+## V3.1 — Correção do monitoramento do Vasco (04/11/2026)
+
+A página `vasco.com.br/noticias/` é um aplicativo JavaScript e não fornece links de notícias no HTML inicial. Uma inspeção manual no DevTools identificou um endpoint público JSON no domínio `fancontentapi-vasco.vasco.com.br`. A consulta manual agora usa esse endpoint fixo para identificar anúncios sobre ingressos por **ID e título**; o Flamengo continua com o mesmo parser HTML. O monitor segue sem agendamento, sem checkout e sem dados de pagamento.
+
+Os artigos do Vasco vieram com `link: null` na resposta observada; os links exibidos no painel levam à **listagem oficial de notícias**, com indicação explícita de que não são links diretos para o artigo. Os dados do backend e os cadastros anteriores não sofrem migração ou exclusão. Testes executados localmente: 32 aprovados, incluindo parser da resposta fornecida para homologação. **Consulta externa real da nova versão ainda precisa ser validada na VPS.**
+
 ## V2B — Cadastros, partidas e planejamentos persistentes (04/11/2026)
 
 Esta versão acrescenta um **workspace operacional** ao painel de homologação:

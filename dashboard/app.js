@@ -240,7 +240,8 @@ function renderMonitor(data){
     const box=entry(article.title,article.club+' · Detectado '+dateTime(article.discovered_at));
     const tags=node('div','tags');tags.append(badge(article.is_new?'Novo comunicado':'Histórico',article.is_new?'good':'neutral'));
     box.append(tags);
-    const href=node('a','external-link','Ler comunicado no site oficial ↗');href.href=article.url;
+    if(article.link_type==='archive')box.append(node('p','muted small','Sem link individual confirmado; acesso à lista oficial de notícias.'));
+    const href=node('a','external-link',article.link_type==='archive'?'Abrir seção oficial de notícias ↗':'Ler comunicado no site oficial ↗');href.href=article.open_url||article.url;
     href.target='_blank';href.rel='noopener noreferrer';box.append(href);list.append(box);
   }
 }
