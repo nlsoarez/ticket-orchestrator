@@ -1,0 +1,22 @@
+{$APP_SITE_ADDRESS} {
+    encode gzip zstd
+
+    # Protege todas as páginas, inclusive arquivos estáticos.
+    basic_auth {
+        {$ADMIN_USERNAME} {$ADMIN_PASSWORD_HASH}
+    }
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        Cache-Control "no-store"
+        -Server
+    }
+
+    # O segredo não é enviado ao navegador: Caddy o acrescenta internamente.
+    reverse_proxy app:8000 {
+        header_up X-API-Key {$API_KEY}
+        header_up -Authorization
+    }
+}
