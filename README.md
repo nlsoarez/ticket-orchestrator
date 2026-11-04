@@ -10,7 +10,6 @@ A origem era um texto Markdown com trechos de código, não arquivos organizados
 
 ```text
 .
-├── .github/workflows/ci.yml        # testes no GitHub
 ├── bot/                            # FastAPI + execução de homologação
 │   ├── __init__.py
 │   ├── runtime.py
@@ -31,11 +30,11 @@ A origem era um texto Markdown com trechos de código, não arquivos organizados
 
 ## 1. GitHub — repositório existente
 
-O projeto está publicado em **https://github.com/nlsoarez/ticket-orchestrator**. Este repositório já contém a API de homologação, dashboard, arquivos de Docker, testes e integração contínua. Não é necessário enviar o ZIP novamente.
+O projeto está publicado em **https://github.com/nlsoarez/ticket-orchestrator**. Este repositório já contém a API de homologação, dashboard, arquivos de Docker e testes locais. Não é necessário enviar o ZIP novamente.
 
 **Importante:** o repositório está configurado como **público**. Se a intenção for manter código e informações de infraestrutura privados, altere em **Settings → General → Danger Zone → Change repository visibility → Private**. A mudança de visibilidade não revoga cópias já obtidas. Nunca envie segredos de API, senhas reais nem o arquivo `.env`.
 
-O fluxo `.github/workflows/ci.yml` executa **somente os testes automatizados** a cada push na branch `main`. Não faz deploy automático e não altera a VPS.
+**Não utilizamos GitHub Actions.** O GitHub armazena o código-fonte; testes e implantação são executados manualmente, sem workflows de CI/CD.
 
 ## 2. VPS Hostinger com Docker
 
@@ -119,8 +118,6 @@ docker compose ps
 ```
 
 No modo de VPS dedicada, inclua `-f docker-compose.public.yml` nos comandos.
-
-Para automação futura via GitHub Actions, a Hostinger publica o fluxo oficial: https://github.com/hostinger/deploy-on-vps . Requer `HOSTINGER_API_KEY` em *Secrets*, `HOSTINGER_VM_ID` em *Variables* e autorização de leitura para repositório privado. **Não ative deploy automático antes de confirmar proxy, segredos e testes.**
 
 ## 5. Verificação e segurança
 
