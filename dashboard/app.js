@@ -1,8 +1,8 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const state = { people: [], groups: [], matches: [], intents: [], summary: null, personEditing: null, groupEditing: null, matchEditing: null, working: false };
-const sectionLabels = {overview:'Visão geral',people:'Torcedores',groups:'Grupos de compra',matches:'Partidas',intents:'Planejamentos'};
-const subtitulos = {overview:'Organize pessoas, grupos e jogos antes da abertura de vendas.',people:'Cadastre pessoas e vínculos com clubes sem armazenar documentos sensíveis.',groups:'Monte grupos de compra com vários portadores de ingressos.',matches:'Registre partidas e condições informadas manualmente.',intents:'Crie intenções com orçamento definido e identifique pendências.'};
+const sectionLabels = {overview:'Visão geral',people:'Torcedores',groups:'Grupos de compra',matches:'Partidas',intents:'Planejamentos',monitor:'Monitoramento'};
+const subtitulos = {overview:'Organize pessoas, grupos e jogos antes da abertura de vendas.',people:'Cadastre pessoas e vínculos com clubes sem armazenar documentos sensíveis.',groups:'Monte grupos de compra com vários portadores de ingressos.',matches:'Registre partidas e condições informadas manualmente.',intents:'Crie intenções com orçamento definido e identifique pendências.',monitor:'Consulte manualmente notícias públicas de ingressos nos sites oficiais.'};
 const saleLabels = {unknown:'Não confirmada',closed:'Fechada',members:'Sócios',general:'Público geral'};
 const issuesLabels = {
   integracao_nao_habilitada:'Integração comercial não habilitada',
@@ -46,6 +46,7 @@ function showView(view) {
   document.querySelectorAll('.nav-button').forEach(x=>{const active=x.dataset.view===view;x.classList.toggle('active',active);x.setAttribute('aria-current',active?'page':'false');});
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+view));
   $('currentSection').textContent=sectionLabels[view]; $('pageTitle').textContent=sectionLabels[view]; $('pageSubtitle').textContent=subtitulos[view];
+  if(view==='monitor')loadMonitor();
   if(innerWidth < 800)window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('[data-view], [data-open]').forEach(x=>x.addEventListener('click',()=>showView(x.dataset.view||x.dataset.open)));
@@ -218,6 +219,49 @@ async function refreshSimulation(){
 async function simulationCommand(path){await runTask(async()=>{await api(path,{method:'POST'});showFeedback('Comando de simulação executado.');});await refreshSimulation();}
 $('simStart').addEventListener('click',()=>simulationCommand('/api/start'));
 $('simStop').addEventListener('click',()=>simulationCommand('/api/stop'));
+
+
+// V3: status é leitura local de SQLite; a rede externa só é consultada após clique explícito.
+let monitorBusy=false;
+function renderMonitor(data){
+  $('monitorNewCount').textContent=`${data.new_count||0} novos`;
+  const sources=$('monitorSources'); sources.replaceChildren();
+  for(const item of (data.sources||[])){
+    const status=item.error ? 'Falha na consulta' : item.last_success ? `${item.found_count} notícia(s) encontradas` : 'Ainda não consultado';
+    const box=entry(item.club,status+' · '+(item.last_attempt?dateTime(item.last_attempt):'—'));
+    const link=node('a','external-link','Abrir notícias oficiais ↗');
+    link.href=item.url;link.target='_blank';link.rel='noopener noreferrer';box.append(link);
+    if(item.error){box.append(node('p','monitor-error',item.error));}
+    sources.append(box);
+  }
+  const list=$('monitorArticles');list.replaceChildren();
+  if(!(data.announcements||[]).length){empty(list,'Nenhum comunicado registrado. A primeira consulta cria a base histórica.');return;}
+  for(const article of data.announcements){
+    const box=entry(article.title,article.club+' · Detectado '+dateTime(article.discovered_at));
+    const tags=node('div','tags');tags.append(badge(article.is_new?'Novo comunicado':'Histórico',article.is_new?'good':'neutral'));
+    box.append(tags);
+    const href=node('a','external-link','Ler comunicado no site oficial ↗');href.href=article.url;
+    href.target='_blank';href.rel='noopener noreferrer';box.append(href);list.append(box);
+  }
+}
+async function loadMonitor(){
+  try{const data=await api('/api/monitor/status');renderMonitor(data);}
+  catch(e){showFeedback('Não foi possível consultar o monitoramento: '+e.message,true);}
+}
+$('monitorScan').addEventListener('click',async()=>{
+  if(monitorBusy)return;monitorBusy=true;
+  $('monitorScan').disabled=true;$('monitorScan').textContent='Consultando sites oficiais...';
+  try{
+    const data=await api('/api/monitor/scan',{method:'POST'});renderMonitor(data);
+    const message=data.outcome==='ok'?'Consulta concluída.':data.outcome==='partial_failure'?'Consulta parcial: confira os avisos de cada fonte.':'As fontes não puderam ser consultadas; confira os avisos.';
+    showFeedback(message,data.outcome==='failed');
+  }catch(e){showFeedback('Consulta não concluída: '+e.message,true);await loadMonitor();}
+  finally{monitorBusy=false;$('monitorScan').disabled=false;$('monitorScan').textContent='Verificar comunicados agora';}
+});
+$('monitorAck').addEventListener('click',async()=>{
+  try{renderMonitor(await api('/api/monitor/ack',{method:'POST'}));showFeedback('Comunicados marcados como lidos.');}
+  catch(e){showFeedback('Falha ao marcar como lidos: '+e.message,true);}
+});
 
 clearPersonEdit();
 refreshData().catch(e=>{$('connection').className='connection offline';$('connection').textContent='Servidor indisponível';showFeedback('Não foi possível carregar os dados: '+e.message,true);});

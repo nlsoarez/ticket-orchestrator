@@ -18,6 +18,14 @@ python -m unittest discover -s tests -p 'test_purchase_planning.py' -v
 
 **Esta base de planejamento ainda não está conectada ao dashboard/API e não realiza compras ou pagamentos.** O serviço atualmente implantado na Hostinger não foi alterado. Não utilizamos GitHub Actions.
 
+## V3 — Monitoramento manual de comunicados oficiais (04/11/2026)
+
+Inclui a aba **Monitoramento** para consultar notícias públicas de ingressos nos domínios oficiais do Vasco e Flamengo mediante clique explícito em **Verificar comunicados agora**. Armazena links no SQLite existente, trata a primeira consulta como base histórica, destaca novos links sem duplicar registros e permite **Marcar lidos**. Consulta o site de cada clube de forma independente, com erros visíveis por fonte.
+
+**Limites:** não faz consultas automáticas ao abrir o painel, não acessa bilheterias autenticadas, não contorna filas, não compra, não reserva e não paga ingressos. As fontes podem recusar consultas ou depender de JavaScript, e a leitura real via VPS ainda precisa ser homologada. A leitura de notícia não equivale à disponibilidade de ingressos.
+
+Contratos, fontes, segurança, deploy e limitações estão em [docs/monitoramento-v3.md](docs/monitoramento-v3.md). O conjunto de 26 testes locais passou, incluindo oito novos testes de monitoramento, com dados simulados. Sem GitHub Actions.
+
 ## V2B — Cadastros, partidas e planejamentos persistentes (04/11/2026)
 
 Esta versão acrescenta um **workspace operacional** ao painel de homologação:

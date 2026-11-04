@@ -21,8 +21,9 @@
         <button class="nav-button" type="button" data-view="groups"><span class="nav-icon">♧</span> Grupos de compra</button>
         <button class="nav-button" type="button" data-view="matches"><span class="nav-icon">▦</span> Partidas</button>
         <button class="nav-button" type="button" data-view="intents"><span class="nav-icon">◎</span> Planejamentos</button>
+        <button class="nav-button" type="button" data-view="monitor"><span class="nav-icon">◉</span> Monitoramento</button>
       </nav>
-      <div class="sidebar-bottom"><div class="sidebar-bottom-label">AMBIENTE</div><div class="environment"><span class="status-dot"></span> Homologação · V2</div><p>Compras e cobranças reais desativadas.</p></div>
+      <div class="sidebar-bottom"><div class="sidebar-bottom-label">AMBIENTE</div><div class="environment"><span class="status-dot"></span> Homologação · V3</div><p>Compras e cobranças reais desativadas.</p></div>
     </aside>
     <div class="page">
       <header class="topbar"><div class="breadcrumb">Plataforma / <span id="currentSection">Visão geral</span></div><div id="connection" role="status" class="connection checking"><i></i> Conectando...</div></header>
@@ -102,6 +103,22 @@
               <button class="btn" type="submit">Salvar planejamento</button>
             </form></article>
             <article class="surface"><div class="surface-heading"><div><span class="eyebrow">EM PREPARAÇÃO</span><h2>Planejamentos <span class="count" id="intentsCount">0</span></h2></div></div><div id="intentsList" class="stack"><div class="empty">Crie um grupo e uma partida para começar.</div></div><div id="reviewPanel" role="status" class="review-panel hidden"></div></article>
+          </div>
+        </section>
+        <section id="view-monitor" class="view">
+          <div class="two-cols monitor-layout">
+            <article class="surface">
+              <div class="surface-heading"><div><span class="eyebrow">FONTES PÚBLICAS OFICIAIS</span><h2>Consultar comunicados</h2></div></div>
+              <p class="muted">A consulta ocorre <strong>somente ao clicar</strong> no botão. Não acessa contas, filas, bilheterias ou serviços de pagamento. Na primeira consulta os anúncios encontrados são classificados como base histórica, sem alerta de novidade.</p>
+              <button id="monitorScan" class="btn" type="button">Verificar comunicados agora</button>
+              <div class="alert-inline monitor-warning">Notícias encontradas <strong>não comprovam disponibilidade</strong> de ingressos. Confira horários, prioridades e canais de venda no próprio comunicado oficial.</div>
+              <div class="surface-heading monitor-source-heading"><div><span class="eyebrow">SITUAÇÃO DAS FONTES</span><h2>Vasco e Flamengo</h2></div></div>
+              <div id="monitorSources" class="stack"><div class="empty">Consultas ainda não realizadas.</div></div>
+            </article>
+            <article class="surface">
+              <div class="surface-heading"><div><span class="eyebrow">DETECÇÃO DE NOVIDADES</span><h2>Comunicados <span class="count" id="monitorNewCount">0 novos</span></h2></div><button id="monitorAck" class="btn small secondary" type="button">Marcar lidos</button></div>
+              <div id="monitorArticles" class="stack"><div class="empty">Nenhum comunicado armazenado. Clique em verificar para consultar os sites oficiais.</div></div>
+            </article>
           </div>
         </section>
         <div id="feedback" role="status" aria-live="polite" class="feedback hidden"></div>

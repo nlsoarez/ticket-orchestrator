@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .runtime import SimulationRuntime
 from .workspace import router as workspace_router
+from .monitor import router as monitor_router
 
 runtime = SimulationRuntime()
 
@@ -57,5 +58,6 @@ dashboard_dir = Path(os.getenv("DASHBOARD_DIR", "/dashboard"))
 if not dashboard_dir.is_dir():
     dashboard_dir = Path(__file__).resolve().parents[1] / "dashboard"
 app.include_router(workspace_router, dependencies=[Depends(check_api_key)])
+app.include_router(monitor_router, dependencies=[Depends(check_api_key)])
 
 app.mount("/", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")
