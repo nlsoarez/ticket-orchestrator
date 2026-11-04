@@ -29,21 +29,13 @@ A origem era um texto Markdown com trechos de código, não arquivos organizados
 └── README.md
 ```
 
-## 1. GitHub (repositório privado)
+## 1. GitHub — repositório existente
 
-1. Crie um repositório **privado** chamado `ticket-orchestrator` na conta GitHub pretendida, **sem** inicializar README, licença ou .gitignore.
-2. Extraia este ZIP em uma pasta local, entre na pasta e execute:
+O projeto está publicado em **https://github.com/nlsoarez/ticket-orchestrator**. Este repositório já contém a API de homologação, dashboard, arquivos de Docker, testes e integração contínua. Não é necessário enviar o ZIP novamente.
 
-```bash
-git init
-git add .
-git commit -m "Preparar painel e API para homologacao VPS"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/ticket-orchestrator.git
-git push -u origin main
-```
+**Importante:** o repositório está configurado como **público**. Se a intenção for manter código e informações de infraestrutura privados, altere em **Settings → General → Danger Zone → Change repository visibility → Private**. A mudança de visibilidade não revoga cópias já obtidas. Nunca envie segredos de API, senhas reais nem o arquivo `.env`.
 
-O `.env` real é ignorado pelo Git. Nunca faça commit de senhas, tokens de acesso ou credenciais da Hostinger.
+O fluxo `.github/workflows/ci.yml` executa **somente os testes automatizados** a cada push na branch `main`. Não faz deploy automático e não altera a VPS.
 
 ## 2. VPS Hostinger com Docker
 
@@ -63,7 +55,7 @@ Para um repositório privado, configure uma *deploy key* somente leitura conform
 ```bash
 cd /opt
 # Substitua pela URL SSH privada que sua VPS tem autorização para ler.
-git clone git@github.com:SEU_USUARIO/ticket-orchestrator.git
+git clone git@github.com:nlsoarez/ticket-orchestrator.git
 cd ticket-orchestrator
 cp .env.example .env
 ```
