@@ -6,6 +6,18 @@
 
 A origem era um texto Markdown com trechos de código, não arquivos organizados. O componente `dashboard/app/page.tsx` está truncado, e há problemas de segurança e de consistência funcional (chave em `NEXT_PUBLIC_`, TLS desabilitado no cliente, CORS irrestrito e botão parar que não cancela a tarefa). A versão original indicava rotas `api.exemplo.com/cart` e `/checkout`, sem API real comprovada. Também usava uma versão antiga do Next.js. Por isso, esta entrega prioriza **deploy verificável** e converte o dashboard em arquivos estáticos (sem Node.js e sem Vercel), mantendo FastAPI no servidor.
 
+## Evolução para ingressos de futebol — V2A
+
+O foco do produto foi refinado para **Vasco e Flamengo**, contemplando sócios, público geral, convidados e várias pessoas por intenção de compra. A especificação de domínio, segurança, limites financeiros, integrações e estados está em [docs/arquitetura-aquisicao-futebol.md](docs/arquitetura-aquisicao-futebol.md).
+
+A validação de elegibilidade e orçamento (sem chamadas externas) está em [bot/purchase_planning.py](bot/purchase_planning.py); seus 14 testes de regressão estão em [tests/test_purchase_planning.py](tests/test_purchase_planning.py). Execute localmente com:
+
+```bash
+python -m unittest discover -s tests -p 'test_purchase_planning.py' -v
+```
+
+**Esta base de planejamento ainda não está conectada ao dashboard/API e não realiza compras ou pagamentos.** O serviço atualmente implantado na Hostinger não foi alterado. Não utilizamos GitHub Actions.
+
 ## Estrutura
 
 ```text
