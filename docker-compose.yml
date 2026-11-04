@@ -11,8 +11,10 @@ services:
       API_KEY: ${API_KEY:?Configure API_KEY no arquivo .env}
       DASHBOARD_DIR: /dashboard
       JOB_DELAY_SECONDS: ${JOB_DELAY_SECONDS:-1}
+      DATABASE_PATH: /data/ticket_orchestrator.sqlite3
     volumes:
       - ./dashboard:/dashboard:ro
+      - orchestrator_data:/data
     expose:
       - "8000"
     healthcheck:
@@ -46,3 +48,6 @@ services:
 networks:
   backend:
     driver: bridge
+
+volumes:
+  orchestrator_data:

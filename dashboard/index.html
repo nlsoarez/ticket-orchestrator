@@ -4,29 +4,110 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Ticket Orchestrator · Controle</title>
+  <meta name="theme-color" content="#101520">
+  <meta name="description" content="Ticket Orchestrator — planejamento e controle de ingressos de futebol.">
+  <title>Ticket Orchestrator · Futebol</title>
   <link href="/styles.css" rel="stylesheet">
   <script src="/app.js" defer></script>
 </head>
 <body>
-  <div class="shell">
-    <header class="header">
-      <div class="brand"><span class="brand-icon">T</span><div><div class="brand-name">Ticket Orchestrator</div><div class="brand-sub">Painel de controle</div></div></div>
-      <div id="connection" class="pill neutral" role="status">Conectando</div>
-    </header>
-    <main>
-      <div class="eyebrow">AMBIENTE DE HOMOLOGAÇÃO</div>
-      <h1>Controle da operação</h1>
-      <p class="description">Monitoramento do serviço de automação. Esta versão executa somente verificações locais, sem compras nem solicitações a plataformas externas.</p>
-      <div class="grid">
-        <section class="card primary"><div class="label">Situação do serviço</div><div id="status" class="big">Verificando…</div><div id="message" class="muted">Consultando API</div><div class="progress"><div id="progress-bar"></div></div><div class="muted small" id="progress-text">0% concluído</div></section>
-        <section class="card"><div class="label">Última execução</div><div id="last-run" class="value">—</div><div class="muted small">Horário local do navegador</div></section>
-        <section class="card"><div class="label">Modo de operação</div><div class="value">Simulação</div><div class="muted small">Checkout externo desativado</div></section>
-      </div>
-      <section class="card controls"><div><h2>Comandos</h2><p class="muted">Uma execução por vez. Parar interrompe realmente a tarefa em andamento.</p></div><div class="buttons"><button id="start" type="button">Iniciar simulação</button><button id="stop" type="button" class="secondary">Parar</button></div></section>
-      <div class="info"><span class="dot"></span> Servidor protegido por HTTPS e autenticação via proxy reverso. O painel não armazena nenhuma chave de API no navegador.</div>
-    </main>
-    <footer>Ticket Orchestrator · Versão de homologação</footer>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo"><div class="logo-mark">T<span>O</span></div><div><strong>Ticket<br>Orchestrator</strong><small>Football operations</small></div></div>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="navigation" aria-label="Navegação principal">
+        <button class="nav-button active" type="button" data-view="overview"><span class="nav-icon">◈</span> Visão geral</button>
+        <button class="nav-button" type="button" data-view="people"><span class="nav-icon">♙</span> Torcedores</button>
+        <button class="nav-button" type="button" data-view="groups"><span class="nav-icon">♧</span> Grupos de compra</button>
+        <button class="nav-button" type="button" data-view="matches"><span class="nav-icon">▦</span> Partidas</button>
+        <button class="nav-button" type="button" data-view="intents"><span class="nav-icon">◎</span> Planejamentos</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="sidebar-bottom-label">AMBIENTE</div><div class="environment"><span class="status-dot"></span> Homologação · V2</div><p>Compras e cobranças reais desativadas.</p></div>
+    </aside>
+    <div class="page">
+      <header class="topbar"><div class="breadcrumb">Plataforma / <span id="currentSection">Visão geral</span></div><div id="connection" role="status" class="connection checking"><i></i> Conectando...</div></header>
+      <main>
+        <div class="hero"><div><div class="eyebrow">CENTRAL DE INGRESSOS DE FUTEBOL</div><h1 id="pageTitle">Visão geral</h1><p id="pageSubtitle">Organize pessoas, grupos e jogos antes da abertura de vendas.</p></div><div class="hero-flag"><span class="pulse"></span> VASCO <span class="divider">/</span> FLAMENGO <span class="divider">/</span> OUTROS CLUBES</div></div>
+        <div id="notice" class="notice"><strong>Modo de planejamento.</strong> Nenhuma operação realiza reservas, contorna filas ou processa pagamentos. Informações de sócio e biometria são declaradas, não validadas com os clubes.</div>
+
+        <section id="view-overview" class="view active">
+          <div class="metrics">
+            <div class="metric"><span>Torcedores cadastrados</span><strong id="metricPeople">—</strong><small>Perfis com vínculo por clube</small></div>
+            <div class="metric"><span>Grupos de compra</span><strong id="metricGroups">—</strong><small>Múltiplos portadores</small></div>
+            <div class="metric"><span>Partidas cadastradas</span><strong id="metricMatches">—</strong><small>Regras informadas manualmente</small></div>
+            <div class="metric"><span>Planejamentos</span><strong id="metricIntents">—</strong><small>Sem cobrança ativa</small></div>
+          </div>
+          <div class="two-cols">
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">CONTROLE DO AMBIENTE</span><h2>Simulação técnica</h2></div><span id="simulationPill" class="tag neutral">Verificando</span></div><p class="muted">A simulação valida o controle da API. Não consulta sistemas de venda.</p><div class="sim-status"><strong id="simulationStatus">Verificando…</strong><span id="simulationMessage">Aguardando resposta do serviço.</span></div><div class="progress"><div id="progressBar"></div></div><div class="sim-controls"><span id="progressText">0% concluído</span><div><button type="button" id="simStart" class="btn small">Iniciar simulação</button><button type="button" id="simStop" class="btn secondary small">Parar</button></div></div></article>
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">HISTÓRICO</span><h2>Atividades recentes</h2></div></div><div id="activityList" class="stack"><div class="empty">Nenhuma atividade registrada.</div></div></article>
+          </div>
+          <div class="guide-card"><div class="guide-icon">→</div><div><strong>Fluxo recomendado</strong><p>Cadastre os torcedores e vínculos, monte grupos, configure as partidas e crie seus planejamentos com orçamento máximo.</p></div><button type="button" class="btn ghost" data-open="people">Começar cadastro</button></div>
+        </section>
+
+        <section id="view-people" class="view">
+          <div class="two-cols form-layout">
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">CADASTRO</span><h2 id="personFormTitle">Novo torcedor</h2></div></div>
+              <form id="personForm" class="form" autocomplete="off">
+                <label>Nome de identificação<input id="personName" name="name" maxlength="120" minlength="2" required placeholder="Ex.: Torcedor A"></label>
+                <div class="form-subtitle">Vínculos com clubes <button type="button" id="addMembership" class="text-action">+ Adicionar clube</button></div>
+                <div id="membershipRows" class="membership-rows"></div>
+                <div class="checks">
+                  <label class="check"><input id="personConsent" type="checkbox"> <span>Tenho autorização dessa pessoa para planejar sua compra.</span></label>
+                  <label class="check"><input id="personIdentity" type="checkbox"> <span>Documentação declarada como regular (não verificada pela plataforma).</span></label>
+                  <label class="check"><input id="personBiometric" type="checkbox"> <span>Biometria declarada como cadastrada (não verificada pela plataforma).</span></label>
+                </div>
+                <div class="form-actions"><button id="personSubmit" class="btn" type="submit">Cadastrar torcedor</button><button id="personCancel" class="btn secondary hidden" type="button">Cancelar edição</button></div>
+              </form>
+            </article>
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">CADASTRADOS</span><h2>Torcedores <span class="count" id="peopleCount">0</span></h2></div></div><div id="peopleList" class="stack"><div class="empty">Nenhum torcedor ainda.</div></div></article>
+          </div>
+        </section>
+
+        <section id="view-groups" class="view">
+          <div class="two-cols form-layout">
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">GRUPO DE COMPRA</span><h2 id="groupFormTitle">Novo grupo</h2></div></div><form id="groupForm" class="form">
+              <label>Nome do grupo<input id="groupName" minlength="2" maxlength="100" required placeholder="Ex.: Família — jogo do Vasco"></label>
+              <div class="form-subtitle">Selecione os portadores de ingresso</div><div id="groupMembers" class="checkbox-list"></div>
+              <div class="form-actions"><button id="groupSubmit" class="btn" type="submit">Salvar grupo</button><button id="groupCancel" class="btn secondary hidden" type="button">Cancelar edição</button></div>
+            </form></article>
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">COMPOSIÇÃO</span><h2>Meus grupos <span class="count" id="groupsCount">0</span></h2></div></div><div id="groupsList" class="stack"><div class="empty">Cadastre torcedores antes de criar um grupo.</div></div></article>
+          </div>
+        </section>
+
+        <section id="view-matches" class="view">
+          <div class="two-cols form-layout">
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">AGENDA MANUAL</span><h2 id="matchFormTitle">Nova partida</h2></div></div><form id="matchForm" class="form">
+              <div class="field-pair"><label>Mandante<input id="matchHome" minlength="2" maxlength="100" required placeholder="Ex.: Vasco"></label><label>Visitante<input id="matchAway" minlength="2" maxlength="100" required placeholder="Ex.: Flamengo"></label></div>
+              <label>Data e horário da partida<input id="matchKickoff" type="datetime-local" required></label>
+              <label>Plataforma / operador<input id="matchPlatform" minlength="2" maxlength="100" required placeholder="A confirmar"></label>
+              <label>Link oficial (opcional)<input id="matchLink" type="url" placeholder="https://..."></label>
+              <div class="field-pair"><label>Fase de venda<select id="matchPhase"><option value="unknown">Não confirmada</option><option value="closed">Fechada</option><option value="members">Prioridade sócios</option><option value="general">Público geral</option></select></label><label>Limite por compra<input id="matchMax" type="number" min="1" max="20" value="4" required></label></div>
+              <label>Política para grupos e convidados<select id="matchGuest"><option value="unknown">Não confirmada</option><option value="allowed">Permitido — informação manual</option><option value="not_allowed">Não permitido</option></select></label>
+              <label class="check"><input id="matchBio" type="checkbox"> <span>Biometria exigida neste jogo (informação manual)</span></label>
+              <div class="form-actions"><button id="matchSubmit" class="btn" type="submit">Cadastrar partida</button><button id="matchCancel" class="btn secondary hidden" type="button">Cancelar edição</button></div>
+            </form></article>
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">JOGOS</span><h2>Partidas <span class="count" id="matchesCount">0</span></h2></div></div><div id="matchesList" class="stack"><div class="empty">Nenhuma partida cadastrada.</div></div></article>
+          </div>
+        </section>
+
+        <section id="view-intents" class="view">
+          <div class="two-cols form-layout">
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">AUTORIZAÇÃO DE ORÇAMENTO</span><h2>Novo planejamento</h2></div></div><form id="intentForm" class="form">
+              <label>Partida<select id="intentMatch" required><option value="">Selecione a partida</option></select></label>
+              <label>Grupo de torcedores<select id="intentGroup" required><option value="">Selecione o grupo</option></select></label>
+              <label>Comprador responsável<select id="intentBuyer" required><option value="">Selecione o comprador</option></select></label>
+              <label>Setor de preferência<input id="intentSection" minlength="2" maxlength="120" required placeholder="Ex.: Arquibancada"></label>
+              <div class="field-pair"><label>Teto por ingresso (R$)<input id="intentUnit" inputmode="decimal" required placeholder="150,00"></label><label>Teto total (R$)<input id="intentTotal" inputmode="decimal" required placeholder="300,00"></label></div>
+              <div class="alert-inline">Esta etapa registra somente um planejamento. Não solicita cartão, não efetua reserva nem autoriza cobrança.</div>
+              <button class="btn" type="submit">Salvar planejamento</button>
+            </form></article>
+            <article class="surface"><div class="surface-heading"><div><span class="eyebrow">EM PREPARAÇÃO</span><h2>Planejamentos <span class="count" id="intentsCount">0</span></h2></div></div><div id="intentsList" class="stack"><div class="empty">Crie um grupo e uma partida para começar.</div></div><div id="reviewPanel" role="status" class="review-panel hidden"></div></article>
+          </div>
+        </section>
+        <div id="feedback" role="status" aria-live="polite" class="feedback hidden"></div>
+      </main>
+      <footer>Ticket Orchestrator <span>·</span> Planejamento de futebol <span>·</span> Sem integração de pagamento</footer>
+    </div>
   </div>
 </body>
 </html>
