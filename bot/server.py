@@ -1,0 +1,58 @@
+"""API e painel servidos na mesma origem via Caddy."""
+import os
+import secrets
+import time
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.staticfiles import StaticFiles
+
+from .runtime import SimulationRuntime
+
+runtime = SimulationRuntime()
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    yield
+    await runtime.stop()
+
+
+app = FastAPI(title="Ticket Orchestrator - homologação", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+
+
+def check_api_key(x_api_key: str | None = Header(default=None)):
+    configured = os.getenv("API_KEY", "")
+    if not configured or configured.startswith("SUBSTITUA_") or len(configured) < 32:
+        raise HTTPException(status_code=503, detail="API_KEY não configurada corretamente")
+    if x_api_key is None or not secrets.compare_digest(x_api_key, configured):
+        raise HTTPException(status_code=403, detail="Acesso não autorizado")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "time": time.time(), "mode": "simulation"}
+
+
+@app.get("/api/status", dependencies=[Depends(check_api_key)])
+async def status():
+    return runtime.status()
+
+
+@app.post("/api/start", dependencies=[Depends(check_api_key)])
+async def start():
+    return await runtime.start()
+
+
+@app.post("/api/stop", dependencies=[Depends(check_api_key)])
+async def stop():
+    return await runtime.stop()
+
+
+# Na VPS o volume do dashboard é montado em /dashboard.
+# Localmente, o servidor usa dashboard/ na raiz do projeto.
+dashboard_dir = Path(os.getenv("DASHBOARD_DIR", "/dashboard"))
+if not dashboard_dir.is_dir():
+    dashboard_dir = Path(__file__).resolve().parents[1] / "dashboard"
+app.mount("/", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")

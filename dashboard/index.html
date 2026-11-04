@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Ticket Orchestrator · Controle</title>
+  <link href="/styles.css" rel="stylesheet">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <div class="brand"><span class="brand-icon">T</span><div><div class="brand-name">Ticket Orchestrator</div><div class="brand-sub">Painel de controle</div></div></div>
+      <div id="connection" class="pill neutral" role="status">Conectando</div>
+    </header>
+    <main>
+      <div class="eyebrow">AMBIENTE DE HOMOLOGAÇÃO</div>
+      <h1>Controle da operação</h1>
+      <p class="description">Monitoramento do serviço de automação. Esta versão executa somente verificações locais, sem compras nem solicitações a plataformas externas.</p>
+      <div class="grid">
+        <section class="card primary"><div class="label">Situação do serviço</div><div id="status" class="big">Verificando…</div><div id="message" class="muted">Consultando API</div><div class="progress"><div id="progress-bar"></div></div><div class="muted small" id="progress-text">0% concluído</div></section>
+        <section class="card"><div class="label">Última execução</div><div id="last-run" class="value">—</div><div class="muted small">Horário local do navegador</div></section>
+        <section class="card"><div class="label">Modo de operação</div><div class="value">Simulação</div><div class="muted small">Checkout externo desativado</div></section>
+      </div>
+      <section class="card controls"><div><h2>Comandos</h2><p class="muted">Uma execução por vez. Parar interrompe realmente a tarefa em andamento.</p></div><div class="buttons"><button id="start" type="button">Iniciar simulação</button><button id="stop" type="button" class="secondary">Parar</button></div></section>
+      <div class="info"><span class="dot"></span> Servidor protegido por HTTPS e autenticação via proxy reverso. O painel não armazena nenhuma chave de API no navegador.</div>
+    </main>
+    <footer>Ticket Orchestrator · Versão de homologação</footer>
+  </div>
+</body>
+</html>
