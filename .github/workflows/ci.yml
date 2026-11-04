@@ -23,6 +23,6 @@ jobs:
       - name: Executar testes
         env:
           PYTHONPATH: .
-          API_KEY: chave_de_teste_uso_local
+          API_KEY: ci_only_test_key_32_characters_at_least_no_real_secret
           JOB_DELAY_SECONDS: '0.05'
         run: python -m pytest -q tests/
