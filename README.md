@@ -47,15 +47,19 @@ curl -I http://127.0.0.1:8182/
 
 A última resposta deverá ser **401 Unauthorized** sem credenciais; isso indica que o gateway exige autenticação. Se `git status --short` mostrar alterações locais, investigue antes do `git pull` (não use `git reset --hard`).
 
-**Backup dos cadastros**, sem interromper os outros contêineres:
+**Backup consistente dos cadastros** (após primeiro uso; não altera outros contêineres):
 
 ```bash
 cd /opt/ticket-orchestrator
 mkdir -p /root/ticket-backups
-docker compose exec -T app python -c 'import sqlite3; src=sqlite3.connect("/data/ticket_orchestrator.sqlite3"); dst=sqlite3.connect("/tmp/ticket-backup.sqlite3"); src.backup(dst); dst.close(); src.close()'
+chmod 700 /root/ticket-backups
+docker compose exec -T app python -c 'import sqlite3; src=sqlite3.connect("/data/ticket_orchestrator.sqlite3"); dst=sqlite3.connect("/data/backup_snapshot.sqlite3"); src.backup(dst); dst.close(); src.close()'
+docker cp "$(docker compose ps -q app):/data/backup_snapshot.sqlite3" "/root/ticket-backups/ticket-$(date +%Y%m%d-%H%M%S).sqlite3"
+docker compose exec -T app python -c 'from pathlib import Path; Path("/data/backup_snapshot.sqlite3").unlink(missing_ok=True)'
+chmod 600 /root/ticket-backups/*.sqlite3
 ```
 
-**Atenção:** o comando acima **não funciona como backup persistente** se usado literalmente, pois `/tmp` é temporário e interno ao contêiner. O procedimento recomendado é fazer backup consistente a partir de uma pasta de backup persistente montada para esse fim ou utilizar `docker run` com os volumes adequados, sem copiar o banco SQLite em uso com `cp`. Não remova volumes de dados. Antes de usar o sistema com cadastros reais, defina retenção e cópias de segurança regulares.
+O backup do SQLite usa sua API nativa, evitando copiar um banco aberto. Guarde cópia externa da VPS e defina política de retenção se for cadastrar pessoas reais. Não utilize `docker compose down -v`, que remove volumes de dados.
 
 ### Testes locais (sem CI automatizado)
 
